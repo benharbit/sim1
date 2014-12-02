@@ -73,8 +73,8 @@ double get_traderpnl(vector<order> os,double theoprice){
 
 	avgbuyprice/=max(numbuyshares,1.0);
 	avgsellprice/=max(numsellshares,1.0);
-	cout<<"numshares"<<" "<<numbuyshares<<" "<<numsellshares<<" "<<theoprice<<" "<<avgbuyprice<<" "<<avgsellprice<<" "<<
-	(theoprice-avgbuyprice)*numbuyshares + (avgsellprice-theoprice)*numsellshares <<std::endl;
+	//cout<<"numshares"<<" "<<numbuyshares<<" "<<numsellshares<<" "<<theoprice<<" "<<avgbuyprice<<" "<<avgsellprice<<" "<<
+	//(theoprice-avgbuyprice)*numbuyshares + (avgsellprice-theoprice)*numsellshares <<std::endl;
 	return (theoprice-avgbuyprice)*numbuyshares + (avgsellprice-theoprice)*numsellshares ;
 	
 }
@@ -534,13 +534,13 @@ int main()
 
 
 	
-		
-		bidsums.push_back(bidsum1);
-		asksums.push_back(asksum1);
+			
+			bidsums.push_back(bidsum1);
+			asksums.push_back(asksum1);
 
 			//cout<<"stepnum "<<h<<endl;
 			++currenttimestep_global;
-			if(false && i>5 && mytradecount<20  && ob.topask_loc - ob.topbid_loc==1){
+			if(true && i>500 && mytradecount<20  && ob.topask_loc - ob.topbid_loc==1){
 				order o1;
 				mytradecount++;
 				
@@ -549,50 +549,33 @@ int main()
 
 				enter_bidsum.push_back(bidsum1);
 				enter_asksum.push_back(asksum1);
-				leave_bidsum,leave_asksum;
+				
 
 				double quant;
 				double isbuy;
 				//o1.quant = ob.levels.at(ob.topask_loc).asksum;
-				quant = ob.levels.at(ob.topask_loc).asksum;
-				isbuy = true;
-				//o1.isbuy = true;
-				trader1_position  += quant;
-				myplaceorder1(ob,isbuy,quant,temptrades);
-
-
-				//sell case
-				/*
-				quant = ob.levels.at(ob.topbid_loc).asksum;
-				isbuy = false;
-				trader1_position  -= quant;
-				myplaceorder1(ob,isbuy,quant,temptrades);
-				*/
-
-
-				//ob.printbook();
-
-				//ob.addorder(ob,o1,true,-1,temptrades);
-				//cout<<"XXXXXXXX\n";
-				//ob.printbook();
 				
-				/*				
-				o1.quant = ob.levels.at(ob.topbid_loc).bidsum;
-				o1.isbuy = false;
-				trader1_position  -= o1.quant;
-				//ob.printbook();
-				ob.addorder(ob,o1,false,-1,temptrades);
-				*/
-				//cout<<mytradecount<<" XXXXXXX\n";
-				//ob.printbook();
-				//int xxx;
-				//cin>>xxx;
-				//cout<<"tradesz="<<temptrades.size()<<std::endl;
-				//if(temptrades.size())
-					//cout<<"tradeinfo "<<temptrades.at(0).price<<" "<<temptrades.at(0).quant<<std::endl;
-				//cout<<std::endl;
-				//cout<<"after sell "<<ob.get_midprice()<<std::endl;
-				//ob.printbook();
+				if(false){//do buy case
+					quant = ob.levels.at(ob.topask_loc).asksum*1.02;
+					isbuy = true;
+					//o1.isbuy = true;
+					trader1_position  += quant;
+					myplaceorder1(ob,isbuy,quant,temptrades);
+
+				}
+				else{
+					quant = ob.levels.at(ob.topbid_loc).bidsum*1.02;
+					isbuy = false;
+					//o1.isbuy = true;
+					trader1_position  -= quant;
+					cout<<"sell quant "<<quant<<" "<<trader1_position<<" "<<std::endl;
+					myplaceorder1(ob,isbuy,quant,temptrades);
+
+				}
+
+
+
+				
 				if(temptrades.size())
 					trader1_trades.insert(trader1_trades.end(),temptrades.begin(),temptrades.end());
 			}
@@ -603,7 +586,7 @@ int main()
 
 			}
 
-			if(trader1_position>100 && ob.topask_loc - ob.topbid_loc==1 && i>900){
+			if(fabs(trader1_position)>100 && ob.topask_loc - ob.topbid_loc==1 && i>900){
 				order o1;
 				//cout<<"closed trade"<<endl;
 				double bidsum1,asksum1;
@@ -613,17 +596,20 @@ int main()
 				leave_asksum.push_back(asksum1);
 				
 
-
-				
-				o1.quant = min(ob.levels.at(ob.topbid_loc).bidsum,trader1_position);
-				o1.isbuy = false;
-				trader1_position  -= o1.quant;
-				
-				/*
-				o1.quant = min(ob.levels.at(ob.topask_loc).asksum,trader1_position);
-				o1.isbuy = true;
-				trader1_position  += o1.quant;
-				*/
+				if(trader1_position>0){
+					o1.quant = min(ob.levels.at(ob.topbid_loc).bidsum,trader1_position);
+					o1.isbuy = false;
+				//	cout<<"sell back"<<" "<<trader1_position <<" "<<o1.quant<<endl;
+					trader1_position  -= o1.quant;
+					
+				}
+				else{	
+					o1.quant = min(ob.levels.at(ob.topask_loc).asksum,fabs(trader1_position));
+					o1.isbuy = true;
+					cout<<"buy back"<<" "<<trader1_position <<" "<<o1.quant<<endl;
+					trader1_position  += o1.quant;
+					
+				}
  				//void addorder(orderbook& ob,order& o1,bool isbuy,int level_offset,vector<order>& trades)
 			
 				ob.addorder(ob,o1,o1.isbuy,-1,temptrades);
@@ -681,10 +667,10 @@ int main()
 
 	cout<<"average closing price "<<mymean(closingprices)<<" "<<mystd(closingprices)<<" "<<*min_element(closingprices.begin(), closingprices.end())<<
 	" "<<*max_element(closingprices.begin(), closingprices.end())<<" trade pnl "<<mymean(trader1_pnls)<<" trade std "<<mystd(trader1_pnls)<<
-	" "<<accumulate(enter_bidsum.begin(),enter_bidsum.end(),0)/double(enter_bidsum.size())<<" "<<
-	" "<<accumulate(enter_asksum.begin(),enter_asksum.end(),0)/double(enter_asksum.size())<<" "<<
-" "<<accumulate(leave_bidsum.begin(),leave_bidsum.end(),0)/double(leave_bidsum.size())<<" "<<
-	" "<<accumulate(leave_asksum.begin(),leave_asksum.end(),0)/double(leave_asksum.size())<<" "<<
+	"\n bidsum avg "<<accumulate(enter_bidsum.begin(),enter_bidsum.end(),0)/double(enter_bidsum.size())<<" "<<
+	" asksum avg "<<accumulate(enter_asksum.begin(),enter_asksum.end(),0)/double(enter_asksum.size())<<" "<<
+" leave bidsum avg "<<accumulate(leave_bidsum.begin(),leave_bidsum.end(),0)/double(leave_bidsum.size())<<" "<<
+	"leave asksum avg "<<accumulate(leave_asksum.begin(),leave_asksum.end(),0)/double(leave_asksum.size())<<" "<<
 	" "<<accumulate(bidsums.begin(),bidsums.end(),0)/double(bidsums.size())<<" "<<
 	" "<<accumulate(asksums.begin(),asksums.end(),0)/double(asksums.size())<<" "<<
 	std::endl;
